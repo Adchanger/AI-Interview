@@ -1,0 +1,3 @@
+# 构建静态站点所需依赖（本地用 .venv，CI 中由 workflow 安装）
+markdown>=3.5
+pygments>=2.17

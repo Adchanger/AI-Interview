@@ -1,0 +1,11 @@
+# 虚拟环境
+.venv
+
+# 项目配置
+.claude
+
+# 临时文件
+.tmp
+
+# 构建产物（由 build.py / GitHub Actions 生成）
+site/
