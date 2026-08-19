@@ -3,6 +3,7 @@
 
 # 项目配置
 .claude
+__pycache__
 
 # 临时文件
 .tmp

@@ -22,7 +22,10 @@ import sys
 from pathlib import Path
 
 import markdown
+from latex2mathml.converter import convert as latex_to_mathml
+from markdown.extensions import Extension
 from markdown.extensions.toc import slugify_unicode
+from markdown.preprocessors import Preprocessor
 from pygments.formatters import HtmlFormatter
 
 # ------------------------------------------------------------ 配置
@@ -167,8 +170,53 @@ def detect_repo_url():
     return re.sub(r"\.git$", "", url)
 
 
+MATH_SCAN = re.compile(
+    r"""
+      (?P<fence>`+)(?P<fencebody>.+?)(?P=fence)      # 行内代码，原样保留（先匹配以保护其中的 $）
+    | \$\$(?P<block>(?:[^$\\]|\\.)+?)\$\$            # 独立展示公式
+    | (?<![\\$0-9A-Za-z])
+      \$(?!\s)(?P<inline>(?:[^$\n\\]|\\.)+?)(?<!\s)\$
+      (?![0-9$])                                     # 行内公式（排除「$5」这类货币写法）
+    """,
+    re.S | re.X,
+)
+
+
+class MathPreprocessor(Preprocessor):
+    """把 $...$ / $$...$$ 转成 MathML 并塞进 htmlStash，避开代码与后续 markdown 处理。
+
+    优先级低于 fenced_code_block（25），因此 ``` 围栏里的内容早已被暂存，不会被误转；
+    行内 `code` 由 MATH_SCAN 的第一个分支保护。
+    """
+
+    priority = 15
+
+    def run(self, lines):
+        def sub(m):
+            if m.group("fence") is not None:
+                return m.group(0)                    # 行内代码：原样返回
+            block = m.group("block")
+            tex = (block if block is not None else m.group("inline")).strip()
+            try:
+                mathml = latex_to_mathml(
+                    tex, display="block" if block is not None else "inline")
+            except Exception as exc:                 # 公式写错时不要让整站构建失败
+                print(f"   ⚠️  公式转换失败：{tex[:60]!r} → {exc}")
+                return m.group(0)
+            cls = "math-block" if block is not None else "math-inline"
+            html_frag = f'<span class="{cls}">{mathml}</span>'
+            return self.md.htmlStash.store(html_frag)
+
+        return MATH_SCAN.sub(sub, "\n".join(lines)).split("\n")
+
+
+class MathExtension(Extension):
+    def extendMarkdown(self, md):
+        md.preprocessors.register(MathPreprocessor(md), "mathml", MathPreprocessor.priority)
+
+
 MD = markdown.Markdown(
-    extensions=["extra", "toc", "codehilite", "sane_lists"],
+    extensions=["extra", "toc", "codehilite", "sane_lists", MathExtension()],
     extension_configs={
         "codehilite": {"css_class": "highlight", "guess_lang": False},
         "toc": {"slugify": slugify_unicode},
@@ -195,10 +243,15 @@ def render_markdown(doc: Doc, docs_by_rel: dict) -> str:
 
 
 def extract_toc(body_html: str):
-    """从生成的 HTML 中提取 h2/h3 目录。"""
+    """从生成的 HTML 中提取 h2/h3 目录。
+
+    标题里若含 MathML（$...$ 写法），剥标签会把 <msqrt><mi>d</mi><mi>k</mi>
+    压成无意义的 "dk"，所以整块公式统一降级成 ⟨公式⟩ 占位，提示改用纯文本写标题。
+    """
     toc = []
     for m in re.finditer(r'<h([23]) id="([^"]+)"[^>]*>(.*?)</h\1>', body_html, re.S):
-        inner = re.sub(r"<[^>]+>", "", m.group(3))
+        inner = re.sub(r'<span class="math-[^"]*">.*?</span>\s*', "⟨公式⟩", m.group(3), flags=re.S)
+        inner = re.sub(r"<[^>]+>", "", inner)
         toc.append((int(m.group(1)), m.group(2), html.unescape(inner).strip()))
     return toc
 
@@ -217,9 +270,6 @@ def page_shell(*, page, title, out_rel, nav_html, content, repo_url, build_date,
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{esc(title)} · {esc(SITE["title"])}</title>
 <meta name="description" content="{esc(SITE["tagline"])}">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="{root}assets/style.css">
 <link rel="stylesheet" href="{root}assets/pygments.css">
 </head>
