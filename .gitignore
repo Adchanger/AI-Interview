@@ -3,6 +3,7 @@
 
 # 项目配置
 .claude
+.codebuddy
 __pycache__
 
 # 临时文件
