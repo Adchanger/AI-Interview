@@ -61,12 +61,12 @@
 
   /* ---------- 首页：层级索引侧边栏（分类聚焦 / 搜索 / 标签 / 滚动跟随） ---------- */
   if (page === 'home') {
-    var input     = document.querySelector('.sidebar-search input');
-    var sidebar   = document.querySelector('.index-sidebar');
-    var toggle    = document.querySelector('.sidebar-toggle');
+    var input     = document.querySelector('.rail-search input');
+    var sidebar   = document.querySelector('.side-rail');
+    var toggle    = document.querySelector('.rail-toggle');
     var tree      = document.querySelector('.tree');
     var allNode   = document.querySelector('.tree-all');
-    var main      = document.querySelector('.home-main');
+    var main      = document.querySelector('.content-col');
     var emptyMsg  = document.querySelector('.filter-empty');
     var vbTitle   = document.querySelector('.vb-title');
     var vbDesc    = document.querySelector('.vb-desc');

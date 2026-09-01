@@ -453,52 +453,50 @@ def build_home(docs, groups, fresh_dates, repo_url, build_date, latest_date, top
     tree_html = sidebar_tree(groups, out_rel, {d.rel_md for d in recent}, top_tags, len(docs))
 
     content = f"""
-<div class="wrap">
-  <section class="hero">
-    <h1>每天学习一点 <span class="em">AI</span> 知识</h1>
-    <p class="tagline">{esc(SITE["tagline"])}</p>
-    <div class="hero-stats">
-      <div class="stat"><div class="num">{len(docs)}</div><div class="label">已收录文章</div></div>
-      <div class="stat"><div class="num">{cat_count}</div><div class="label">知识分类</div></div>
-      <div class="stat"><div class="num">{esc(latest_date[5:])}</div><div class="label">最近更新</div></div>
-    </div>
-  </section>
-
-  <section class="recent-strip">
-    <h2>🌿 最近更新 <a class="more" href="updates.html">查看全部 →</a></h2>
-    <div class="recent-list">
-{recent_html}
-    </div>
-  </section>
-
-  <div class="home-layout">
-    <aside class="index-sidebar" id="index-sidebar">
-      <div class="sidebar-head">
-        <button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="site-tree">
-          <span class="st-icon">🗂</span>
-          <span class="st-text">全站索引</span>
-          <span class="st-count">{len(docs)} 篇 · {cat_count} 类</span>
-          <span class="st-caret">▾</span>
-        </button>
-        <div class="sidebar-search">
-          <input type="search" placeholder="搜索文章标题、标签…" aria-label="搜索文章">
-        </div>
+<div class="page-shell">
+  <aside class="side-rail" id="side-rail">
+    <div class="rail-head">
+      <button class="rail-toggle" type="button" aria-expanded="false" aria-controls="site-tree">
+        <span class="st-icon">🗂</span>
+        <span class="st-text">全站索引</span>
+        <span class="st-count">{len(docs)} 篇 · {cat_count} 类</span>
+        <span class="st-caret">▾</span>
+      </button>
+      <div class="rail-search">
+        <input type="search" placeholder="搜索文章标题、标签…" aria-label="搜索文章">
       </div>
-      <nav class="tree" id="site-tree" aria-label="全站分类索引">
+    </div>
+    <nav class="tree" id="site-tree" aria-label="全站分类索引">
   {tree_html}
-      </nav>
-    </aside>
+    </nav>
+  </aside>
 
-    <div class="home-main" id="home-main">
-      <div class="view-bar">
-        <span class="vb-title">🗂 全部分类</span>
-        <span class="vb-desc">共 {len(docs)} 篇文章 · 按板块与分类浏览</span>
-        <button class="vb-all" type="button" hidden>← 返回全部分类</button>
+  <div class="content-col" id="content-col">
+    <section class="hero">
+      <h1>每天学习一点 <span class="em">AI</span> 知识</h1>
+      <p class="tagline">{esc(SITE["tagline"])}</p>
+      <div class="hero-stats">
+        <div class="stat"><div class="num">{len(docs)}</div><div class="label">已收录文章</div></div>
+        <div class="stat"><div class="num">{cat_count}</div><div class="label">知识分类</div></div>
+        <div class="stat"><div class="num">{esc(latest_date[5:])}</div><div class="label">最近更新</div></div>
       </div>
-      <div class="filter-empty" style="display:none">没有找到匹配的文章，换个关键词试试～</div>
+    </section>
+
+    <section class="recent-strip">
+      <h2>🌿 最近更新 <a class="more" href="updates.html">查看全部 →</a></h2>
+      <div class="recent-list">
+{recent_html}
+      </div>
+    </section>
+
+    <div class="view-bar">
+      <span class="vb-title">🗂 全部分类</span>
+      <span class="vb-desc">共 {len(docs)} 篇文章 · 按板块与分类浏览</span>
+      <button class="vb-all" type="button" hidden>← 返回全部分类</button>
+    </div>
+    <div class="filter-empty" style="display:none">没有找到匹配的文章，换个关键词试试～</div>
 
 {chr(10).join(group_blocks)}
-    </div>
   </div>
 </div>
 """
