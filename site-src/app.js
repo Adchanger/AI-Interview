@@ -59,32 +59,187 @@
     }
   }
 
-  /* ---------- 首页：按标题 / 标签 / 分类过滤 ---------- */
+  /* ---------- 首页：层级索引侧边栏（分类聚焦 / 搜索 / 标签 / 滚动跟随） ---------- */
   if (page === 'home') {
-    var input = document.querySelector('.filter-bar input');
-    var cards = Array.prototype.slice.call(document.querySelectorAll('.article-card'));
-    var sections = Array.prototype.slice.call(document.querySelectorAll('.category-section'));
-    var noResult = document.querySelector('.filter-empty');
+    var input     = document.querySelector('.sidebar-search input');
+    var sidebar   = document.querySelector('.index-sidebar');
+    var toggle    = document.querySelector('.sidebar-toggle');
+    var tree      = document.querySelector('.tree');
+    var allNode   = document.querySelector('.tree-all');
+    var main      = document.querySelector('.home-main');
+    var emptyMsg  = document.querySelector('.filter-empty');
+    var vbTitle   = document.querySelector('.vb-title');
+    var vbDesc    = document.querySelector('.vb-desc');
+    var vbAll     = document.querySelector('.vb-all');
 
-    function applyFilter() {
-      var q = (input.value || '').trim().toLowerCase();
-      var anyVisible = false;
-      cards.forEach(function (c) {
-        var hay = (c.getAttribute('data-search') || '').toLowerCase();
-        var show = !q || hay.indexOf(q) !== -1;
-        c.style.display = show ? '' : 'none';
-        if (show) anyVisible = true;
-      });
-      sections.forEach(function (s) {
-        var visible = Array.prototype.some.call(
-          s.querySelectorAll('.article-card'),
-          function (c) { return c.style.display !== 'none'; }
-        );
-        s.style.display = visible ? '' : 'none';
-      });
-      if (noResult) noResult.style.display = anyVisible ? 'none' : '';
+    var catNodes   = Array.prototype.slice.call(document.querySelectorAll('.tree-cat'));
+    var subLinks   = Array.prototype.slice.call(document.querySelectorAll('.t-sub a'));
+    var tagPills   = Array.prototype.slice.call(document.querySelectorAll('.tag-pill'));
+    var treeGroups = Array.prototype.slice.call(document.querySelectorAll('.tree-group'));
+    var cards      = Array.prototype.slice.call(document.querySelectorAll('.category-section .article-card'));
+    var sections   = Array.prototype.slice.call(document.querySelectorAll('.category-section'));
+    var groups     = Array.prototype.slice.call(document.querySelectorAll('.cat-group'));
+
+    var currentCat = '';
+
+    function updateViewBar(shown, q) {
+      if (!vbTitle || !vbDesc) return;
+      var node = currentCat ? catNodes.filter(function (n) {
+        return n.getAttribute('data-cat') === currentCat;
+      })[0] : null;
+      if (node) {
+        var icon = node.querySelector('.t-icon');
+        var name = node.querySelector('.t-name');
+        vbTitle.textContent = (icon ? icon.textContent + ' ' : '') + (name ? name.textContent : '');
+        vbDesc.textContent = 'docs/' + currentCat + '/ · 当前显示 ' + shown + ' 篇';
+        if (vbAll) vbAll.hidden = false;
+      } else {
+        vbTitle.textContent = '🗂 全部分类';
+        vbDesc.textContent = q
+          ? '匹配到 ' + shown + ' 篇文章'
+          : '共 ' + shown + ' 篇文章 · 点左侧分类可聚焦查看';
+        if (vbAll) vbAll.hidden = true;
+      }
     }
-    if (input) input.addEventListener('input', applyFilter);
+
+    function render() {
+      var q = (input && input.value || '').trim().toLowerCase();
+      var shown = 0;
+
+      cards.forEach(function (c) {
+        var sec = c.closest('.category-section');
+        var catOk = !currentCat || (sec && sec.getAttribute('data-cat') === currentCat);
+        var qOk = !q || (c.getAttribute('data-search') || '').toLowerCase().indexOf(q) !== -1;
+        var show = catOk && qOk;
+        c.style.display = show ? '' : 'none';
+        if (show) shown++;
+      });
+
+      sections.forEach(function (s) {
+        var vis = Array.prototype.some.call(s.querySelectorAll('.article-card'), function (c) {
+          return c.style.display !== 'none';
+        });
+        s.style.display = vis ? '' : 'none';
+      });
+      groups.forEach(function (g) {
+        var vis = Array.prototype.some.call(g.querySelectorAll('.category-section'), function (s) {
+          return s.style.display !== 'none';
+        });
+        g.style.display = vis ? '' : 'none';
+      });
+      if (emptyMsg) emptyMsg.style.display = shown ? 'none' : '';
+
+      /* 侧边栏的文章项随搜索同步收窄 */
+      subLinks.forEach(function (a) {
+        var ok = !q || (a.getAttribute('data-search') || '').toLowerCase().indexOf(q) !== -1;
+        a.parentNode.style.display = ok ? '' : 'none';
+      });
+      catNodes.forEach(function (n) {
+        var vis = Array.prototype.some.call(n.querySelectorAll('.t-sub li'), function (li) {
+          return li.style.display !== 'none';
+        });
+        n.style.display = vis ? '' : 'none';
+        n.classList.toggle('expanded', n.classList.contains('is-active') || (!!q && vis));
+      });
+      treeGroups.forEach(function (g) {
+        var inner = g.querySelectorAll('.tree-cat');
+        if (!inner.length) return;                     // 热门标签区不参与过滤
+        g.style.display = Array.prototype.some.call(inner, function (n) {
+          return n.style.display !== 'none';
+        }) ? '' : 'none';
+      });
+
+      updateViewBar(shown, q);
+    }
+
+    function setCat(cat, scrollToMain) {
+      currentCat = cat;
+      catNodes.forEach(function (n) {
+        var on = n.getAttribute('data-cat') === cat;
+        n.classList.toggle('is-active', on);
+        n.classList.remove('is-current');
+        var row = n.querySelector('.t-row');
+        if (row) row.setAttribute('aria-expanded', on ? 'true' : 'false');
+      });
+      if (allNode) allNode.classList.toggle('is-active', !cat);
+      render();
+
+      if (scrollToMain && main) {
+        var top = main.getBoundingClientRect().top + window.pageYOffset - 76;
+        window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+      }
+      /* 窄屏：选完分类自动收起索引，直接看内容 */
+      if (sidebar && window.innerWidth <= 980) {
+        sidebar.classList.remove('open');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      }
+    }
+
+    catNodes.forEach(function (n) {
+      var row = n.querySelector('.t-row');
+      if (!row) return;
+      row.addEventListener('click', function () {
+        var cat = n.getAttribute('data-cat') || '';
+        setCat(currentCat === cat ? '' : cat, true);   // 再次点击取消聚焦
+      });
+    });
+    if (allNode) {
+      allNode.addEventListener('click', function (e) { e.preventDefault(); setCat('', true); });
+    }
+    if (vbAll) vbAll.addEventListener('click', function () { setCat('', true); });
+    if (input) input.addEventListener('input', render);
+
+    tagPills.forEach(function (p) {
+      p.addEventListener('click', function () {
+        var turnOn = !p.classList.contains('is-active');
+        tagPills.forEach(function (o) { o.classList.remove('is-active'); });
+        if (turnOn) {
+          p.classList.add('is-active');
+          if (input) input.value = p.getAttribute('data-tag') || '';
+        } else if (input) {
+          input.value = '';
+        }
+        setCat('', false);
+      });
+    });
+
+    if (toggle && sidebar) {
+      toggle.addEventListener('click', function () {
+        var open = sidebar.classList.toggle('open');
+        toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      });
+    }
+
+    /* 滚动跟随：只在「全部」视图且无搜索词时高亮当前分类 */
+    function ensureVisible(el, box) {
+      var top = el.offsetTop, h = el.offsetHeight;
+      if (top < box.scrollTop) box.scrollTop = Math.max(0, top - 10);
+      else if (top + h > box.scrollTop + box.clientHeight) {
+        box.scrollTop = top + h - box.clientHeight + 10;
+      }
+    }
+    function spy() {
+      if (currentCat || (input && input.value.trim())) return;
+      var best = null, bestTop = -Infinity;
+      sections.forEach(function (s) {
+        if (s.style.display === 'none') return;
+        var top = s.getBoundingClientRect().top;
+        if (top <= 150 && top > bestTop) { bestTop = top; best = s; }
+      });
+      var key = best ? best.getAttribute('data-cat') : '';
+      catNodes.forEach(function (n) {
+        var on = !!key && n.getAttribute('data-cat') === key;
+        n.classList.toggle('is-current', on);
+        if (on && tree) ensureVisible(n, tree);
+      });
+    }
+    var ticking = false;
+    window.addEventListener('scroll', function () {
+      if (ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(function () { spy(); ticking = false; });
+    }, { passive: true });
+    spy();
   }
 
   /* ---------- 最近更新页：按日期筛选 ---------- */

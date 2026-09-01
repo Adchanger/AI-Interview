@@ -42,21 +42,33 @@ SITE = {
     "recent_days": 3,          # 「最近 N 天」窗口
     "recent_strip_count": 6,   # 首页「最近更新」横条展示条数
     "date_chip_count": 12,     # 更新页快捷日期 chips 数量
+    "tag_cloud_count": 16,     # 首页侧边栏「热门标签」个数
 }
 
-# 分类（docs/ 下一级目录）展示名与图标；未登记的目录按目录名显示
-CATEGORIES = {
-    "ml":          {"name": "机器学习",   "icon": "📊", "order": 10},
-    "dl":          {"name": "深度学习",   "icon": "🧠", "order": 20},
-    "llm":         {"name": "大语言模型", "icon": "🤖", "order": 30},
-    "rag":         {"name": "RAG 检索",  "icon": "🔎", "order": 35},
-    "agent":       {"name": "Agent",     "icon": "🦾", "order": 38},
-    "multimodal":  {"name": "多模态",     "icon": "🎨", "order": 40},
-    "nlp":         {"name": "自然语言处理", "icon": "💬", "order": 45},
-    "engineering": {"name": "工程实践",   "icon": "🛠️", "order": 50},
-    "interview":   {"name": "面试题",     "icon": "💼", "order": 60},
+# 板块：分类之上的一层，让首页侧边栏呈现「基础理论 → 大模型技术 → 工程与面试」的层级
+GROUPS = {
+    "foundation": {"name": "基础理论",   "icon": "🌱", "order": 10,
+                   "desc": "机器学习与深度学习的底层基本功"},
+    "frontier":   {"name": "大模型技术", "icon": "🚀", "order": 20,
+                   "desc": "LLM 原理、检索增强、Agent 与多模态"},
+    "practice":   {"name": "工程与面试", "icon": "🛠️", "order": 30,
+                   "desc": "训练推理落地实践与面试准备"},
 }
-DEFAULT_CATEGORY = {"name": None, "icon": "📚", "order": 999}
+DEFAULT_GROUP = {"name": "其他", "icon": "📚", "order": 999, "desc": ""}
+
+# 分类（docs/ 下一级目录）展示名、图标与所属板块；未登记的目录按目录名显示
+CATEGORIES = {
+    "ml":          {"name": "机器学习",   "icon": "📊", "order": 10, "group": "foundation"},
+    "dl":          {"name": "深度学习",   "icon": "🧠", "order": 20, "group": "foundation"},
+    "nlp":         {"name": "自然语言处理", "icon": "💬", "order": 45, "group": "foundation"},
+    "llm":         {"name": "大语言模型", "icon": "🤖", "order": 30, "group": "frontier"},
+    "rag":         {"name": "RAG 检索",  "icon": "🔎", "order": 35, "group": "frontier"},
+    "agent":       {"name": "Agent",     "icon": "🦾", "order": 38, "group": "frontier"},
+    "multimodal":  {"name": "多模态",     "icon": "🎨", "order": 40, "group": "frontier"},
+    "engineering": {"name": "工程实践",   "icon": "🛠️", "order": 50, "group": "practice"},
+    "interview":   {"name": "面试题",     "icon": "💼", "order": 60, "group": "practice"},
+}
+DEFAULT_CATEGORY = {"name": None, "icon": "📚", "order": 999, "group": None}
 
 WEEKDAYS = "一二三四五六日"
 
@@ -102,8 +114,9 @@ class Doc:
         m = re.search(r"^>\s*\*\*标签\*\*[:：]\s*(.+?)\s*$", raw, re.M)
         if not m:
             return []
-        parts = re.split(r"[、，,;/；\s]+", m.group(1))
-        return [p for p in (s.strip() for s in parts) if p]
+        # 只按中英文标点切分；不切空格，否则「KV Cache」这类带空格的标签会被拆成两个
+        parts = re.split(r"[、，,;/；]+", m.group(1))
+        return [p.strip() for p in parts if p.strip()]
 
     def _parse_excerpt(self, raw):
         m = re.search(r"^>\s*\*\*一句话\*\*[:：]\s*(.+?)\s*$", raw, re.M)
@@ -333,8 +346,71 @@ def article_card(doc: Doc, from_out_rel: Path, fresh_dates, show_category=False)
 
 # ------------------------------------------------------------ 各页面生成
 
-def build_home(docs, cats, fresh_dates, repo_url, build_date, latest_date):
+def sidebar_tree(groups, out_rel, recent_keys, top_tags, total):
+    """首页左侧的层级索引：板块 → 分类 → 文章。"""
+    node_all = f"""<a class="tree-node tree-all is-active" href="#" data-cat="">
+      <span class="t-icon">🗂</span>
+      <span class="t-name">全部分类</span>
+      <span class="t-count">{total}</span>
+    </a>"""
+
+    blocks = []
+    for g in groups:
+        cat_nodes = []
+        for cat in g["cats"]:
+            items = []
+            for d in cat["docs"]:
+                href = rel_href(out_rel, d.out_rel)
+                search = esc(" ".join([d.title, " ".join(d.tags), d.category_name]).lower())
+                # 小圆点 = 该篇出现在上方「最近更新」里，避免全站同一天更新时满屏都是点
+                dot = '<span class="new-dot" title="最近更新"></span>' if d.rel_md in recent_keys else ""
+                items.append(
+                    f'<li><a href="{esc(href)}" data-search="{search}">'
+                    f'{dot}<span class="sub-title">{esc(d.title)}</span></a></li>')
+            cat_nodes.append(f"""<div class="tree-node tree-cat" data-cat="{esc(cat['key'])}">
+      <button class="t-row" type="button" aria-expanded="false">
+        <span class="t-caret">›</span>
+        <span class="t-icon">{esc(cat['icon'])}</span>
+        <span class="t-name">{esc(cat['name'])}</span>
+        <span class="t-count">{len(cat['docs'])}</span>
+      </button>
+      <ul class="t-sub">
+        {chr(10).join(items)}
+      </ul>
+    </div>""")
+        blocks.append(f"""<section class="tree-group" data-group="{esc(g['key'])}">
+    <div class="tree-group-head">
+      <span class="g-icon">{esc(g['icon'])}</span>
+      <span class="g-name">{esc(g['name'])}</span>
+      <span class="g-count">{g['count']}</span>
+    </div>
+    <div class="tree-group-body">
+      {chr(10).join(cat_nodes)}
+    </div>
+  </section>""")
+
+    tags_html = ""
+    if top_tags:
+        pills = "\n".join(
+            f'      <button class="tag-pill" type="button" data-tag="{esc(t)}">'
+            f'{esc(t)}<span class="p-n">{n}</span></button>'
+            for t, n in top_tags)
+        tags_html = f"""<section class="tree-group tree-tags">
+    <div class="tree-group-head">
+      <span class="g-icon">🏷</span>
+      <span class="g-name">热门标签</span>
+    </div>
+    <div class="tag-cloud">
+{pills}
+    </div>
+  </section>"""
+
+    return node_all + "\n  " + "\n  ".join(blocks) + ("\n  " + tags_html if tags_html else "")
+
+
+def build_home(docs, groups, fresh_dates, repo_url, build_date, latest_date, top_tags):
     out_rel = Path("index.html")
+    cat_count = sum(len(g["cats"]) for g in groups)
     recent = sorted(docs, key=lambda d: (d.date, d.title), reverse=True)[:SITE["recent_strip_count"]]
     recent_html = "\n".join(
         f"""<a class="recent-item" href="{esc(rel_href(out_rel, d.out_rel))}">
@@ -344,20 +420,37 @@ def build_home(docs, cats, fresh_dates, repo_url, build_date, latest_date):
 </a>""" for d in recent
     )
 
-    sections = []
-    for cat in cats:
-        cards = "\n".join(article_card(d, out_rel, fresh_dates) for d in cat["docs"])
-        sections.append(f"""<section class="category-section">
-  <div class="category-head">
-    <span class="icon">{esc(cat['icon'])}</span>
-    <h2>{esc(cat['name'])}</h2>
-    <span class="count">{len(cat['docs'])} 篇</span>
-    <span class="dir">docs/{esc(cat['key'])}/</span>
-  </div>
-  <div class="article-grid">
+    # 主内容区：板块 → 分类 → 文章卡片
+    group_blocks = []
+    for g in groups:
+        cat_blocks = []
+        for cat in g["cats"]:
+            cards = "\n".join(article_card(d, out_rel, fresh_dates) for d in cat["docs"])
+            cat_blocks.append(f"""<section class="category-section" data-cat="{esc(cat['key'])}">
+    <div class="category-head">
+      <span class="icon">{esc(cat['icon'])}</span>
+      <h2>{esc(cat['name'])}</h2>
+      <span class="count">{len(cat['docs'])} 篇</span>
+      <span class="dir">docs/{esc(cat['key'])}/</span>
+    </div>
+    <div class="article-grid">
 {cards}
+    </div>
+  </section>""")
+        desc = f'<span class="g-desc">{esc(g["desc"])}</span>' if g["desc"] else ""
+        group_blocks.append(f"""<section class="cat-group" data-group="{esc(g['key'])}">
+  <header class="cat-group-head">
+    <span class="g-icon">{esc(g['icon'])}</span>
+    <h2>{esc(g['name'])}</h2>
+    {desc}
+    <span class="g-count">{g['count']} 篇</span>
+  </header>
+  <div class="cat-group-body">
+    {chr(10).join(cat_blocks)}
   </div>
 </section>""")
+
+    tree_html = sidebar_tree(groups, out_rel, {d.rel_md for d in recent}, top_tags, len(docs))
 
     content = f"""
 <div class="wrap">
@@ -366,7 +459,7 @@ def build_home(docs, cats, fresh_dates, repo_url, build_date, latest_date):
     <p class="tagline">{esc(SITE["tagline"])}</p>
     <div class="hero-stats">
       <div class="stat"><div class="num">{len(docs)}</div><div class="label">已收录文章</div></div>
-      <div class="stat"><div class="num">{len(cats)}</div><div class="label">知识分类</div></div>
+      <div class="stat"><div class="num">{cat_count}</div><div class="label">知识分类</div></div>
       <div class="stat"><div class="num">{esc(latest_date[5:])}</div><div class="label">最近更新</div></div>
     </div>
   </section>
@@ -378,12 +471,35 @@ def build_home(docs, cats, fresh_dates, repo_url, build_date, latest_date):
     </div>
   </section>
 
-  <div class="filter-bar">
-    <input type="search" placeholder="搜索文章标题、标签…" aria-label="搜索文章">
-  </div>
-  <div class="filter-empty" style="display:none">没有找到匹配的文章，换个关键词试试～</div>
+  <div class="home-layout">
+    <aside class="index-sidebar" id="index-sidebar">
+      <div class="sidebar-head">
+        <button class="sidebar-toggle" type="button" aria-expanded="false" aria-controls="site-tree">
+          <span class="st-icon">🗂</span>
+          <span class="st-text">全站索引</span>
+          <span class="st-count">{len(docs)} 篇 · {cat_count} 类</span>
+          <span class="st-caret">▾</span>
+        </button>
+        <div class="sidebar-search">
+          <input type="search" placeholder="搜索文章标题、标签…" aria-label="搜索文章">
+        </div>
+      </div>
+      <nav class="tree" id="site-tree" aria-label="全站分类索引">
+  {tree_html}
+      </nav>
+    </aside>
 
-{chr(10).join(sections)}
+    <div class="home-main" id="home-main">
+      <div class="view-bar">
+        <span class="vb-title">🗂 全部分类</span>
+        <span class="vb-desc">共 {len(docs)} 篇文章 · 按板块与分类浏览</span>
+        <button class="vb-all" type="button" hidden>← 返回全部分类</button>
+      </div>
+      <div class="filter-empty" style="display:none">没有找到匹配的文章，换个关键词试试～</div>
+
+{chr(10).join(group_blocks)}
+    </div>
+  </div>
 </div>
 """
     return page_shell(page="home", title="首页", out_rel=out_rel,
@@ -570,6 +686,33 @@ def main():
                      "icon": meta["icon"], "docs": cat_docs})
     cats.sort(key=lambda c: (CATEGORIES.get(c["key"], DEFAULT_CATEGORY)["order"], c["key"]))
 
+    # 在分类之上再聚合一层「板块」，供首页侧边栏呈现层级
+    grouped = {}
+    for c in cats:
+        gk = CATEGORIES.get(c["key"], DEFAULT_CATEGORY).get("group")
+        grouped.setdefault(gk, []).append(c)
+    groups = []
+    for gk, g_cats in grouped.items():
+        meta = GROUPS.get(gk, DEFAULT_GROUP)
+        groups.append({
+            "key": gk or "other",
+            "name": meta["name"],
+            "icon": meta["icon"],
+            "desc": meta["desc"],
+            "cats": g_cats,
+            "count": sum(len(c["docs"]) for c in g_cats),
+        })
+    groups.sort(key=lambda g: (GROUPS.get(g["key"], DEFAULT_GROUP)["order"], g["key"]))
+
+    # 热门标签（排除「面试八股」这类几乎篇篇都有、没有区分度的通用标签）
+    counter = {}
+    for d in docs:
+        for t in d.tags:
+            counter[t] = counter.get(t, 0) + 1
+    too_common = max(2, int(len(docs) * 0.6))
+    top_tags = sorted(((t, n) for t, n in counter.items() if 1 < n <= too_common),
+                      key=lambda kv: (-kv[1], kv[0]))[:SITE["tag_cloud_count"]]
+
     # 重建输出目录
     if OUT_DIR.exists():
         shutil.rmtree(OUT_DIR)
@@ -591,7 +734,8 @@ def main():
 
     # 生成页面
     (OUT_DIR / "index.html").write_text(
-        build_home(docs, cats, fresh_dates, repo_url, build_date, latest_date), encoding="utf-8")
+        build_home(docs, groups, fresh_dates, repo_url, build_date, latest_date, top_tags),
+        encoding="utf-8")
     (OUT_DIR / "updates.html").write_text(
         build_updates(docs, fresh_dates, repo_url, build_date, today), encoding="utf-8")
     for d in docs:
