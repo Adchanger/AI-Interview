@@ -80,6 +80,7 @@
 | 5.3 | 检索优化：chunking、hybrid、rerank、query rewrite、GraphRAG | 「召回率低怎么排查」 | [[/docs/rag/retrieval-optimization-and-graphrag.md]] |
 | 5.4 | Agent 基础：ReAct、Plan-Execute、Function Calling、记忆 | 「ReAct 循环怎么终止」 | [[/docs/agent/agent-fundamentals.md]] |
 | 5.5 | MCP / 多 Agent / 上下文工程 / 可观测性 | 「MCP 解决什么问题」「上下文怎么压缩」 | [[/docs/agent/mcp-multi-agent-context-engineering.md]] |
+| 5.6 | 决策模型（System 1）：Jev / Laya、非自回归判断、概率校准、LLM/VLM 改造 | 「它和 BERT 分类器差在哪」「怎么把 LLM 变成决策模型」「为什么要拟合温度」 | [[/docs/llm/decision-models-jev-laya.md]] |
 
 ## 6. 工程与 Infra
 
