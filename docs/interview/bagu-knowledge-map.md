@@ -1,6 +1,6 @@
 # 算法八股知识点总清单（面试地图）
 
-> **更新时间**：2026-08-31
+> **更新时间**：2026-09-24
 
 > **标签**：面试八股、知识地图、机器学习、深度学习、大模型
 
@@ -12,7 +12,8 @@
 
 1. **先按岗位裁剪**：算法岗（ML/DL/LLM 原理 + 训练对齐权重高）、应用开发岗（RAG + Agent + 推理部署权重高）、Infra 岗（分布式训练 + 推理服务 + 量化权重高）。
 2. **再按「能不能讲 3 分钟」自测**：每个知识点问自己三层——**是什么 → 为什么这样设计 → 换成别的方案会怎样**。答不出第二三层的，就是要补的洞。
-3. **最后刷「面试高频问题速查」**：每篇文档末尾都有 8–12 题速查表，考前只看这一块。
+3. **用「面试题库」以题带点**：[[/docs/questions/positional-encoding-qa.md]]、[[/docs/questions/attention-optimization-qa.md]] 等题集把高频题做成「30 秒速答 + 解析 + 面试官追问」格式——先口述自测，卡壳的点回本清单对应的知识点文档系统补缺。
+4. **最后刷「面试高频问题速查」**：每篇文档末尾都有 8–12 题速查表，考前只看这一块。
 
 > 清单来源：2026 年各家大厂面经与公开题库的交集（卡码笔记大模型面经、JavaGuide RAG/Agent 题库、LLMInterviewQuestions 115 题、后训练算法八股 152 问 Checklist 等），并按「原理可考、答案可背」二次筛选。
 
@@ -46,15 +47,15 @@
 | # | 知识点 | 高频考法 | 文档 |
 |---|--------|----------|------|
 | 3.1 | Transformer 与自注意力 | 「为什么除 √d_k」「复杂度」 | [[/docs/llm/transformer-principle.md]] |
-| 3.2 | 位置编码：正余弦 / 可学习 / RoPE / ALiBi | 「RoPE 为什么能外推」 | [[/docs/llm/positional-encoding.md]] |
-| 3.3 | 注意力变体：MHA / MQA / GQA / MLA | 「GQA 折中了什么」「KV 头数怎么选」 | [[/docs/llm/attention-variants-mha-mqa-gqa.md]] |
-| 3.4 | KV Cache：原理、显存公式、prefill/decode | 「手算 KV Cache 大小」「为什么 decode 是带宽瓶颈」 | [[/docs/llm/kv-cache.md]] |
+| 3.2 | 位置编码：正余弦 / 可学习 / RoPE / ALiBi | 「RoPE 为什么能外推」 | [[/docs/llm/positional-encoding.md]] · 🎯[[/docs/questions/positional-encoding-qa.md]] |
+| 3.3 | 注意力变体：MHA / MQA / GQA / MLA | 「GQA 折中了什么」「KV 头数怎么选」 | [[/docs/llm/attention-variants-mha-mqa-gqa.md]] · 🎯[[/docs/questions/attention-optimization-qa.md]] |
+| 3.4 | KV Cache：原理、显存公式、prefill/decode | 「手算 KV Cache 大小」「为什么 decode 是带宽瓶颈」 | [[/docs/llm/kv-cache.md]] · 🎯[[/docs/questions/attention-optimization-qa.md]] |
 | 3.5 | MLA（低秩 KV 压缩） | 「MLA 与 GQA 的差别」 | [[/docs/llm/mla-multi-head-latent-attention.md]] |
 | 3.6 | MoE：路由、Top-k、负载均衡、专家塌陷 | 「MoE 为什么省算力不省显存」 | [[/docs/llm/moe-mixture-of-experts.md]] |
 | 3.7 | Tokenizer：BPE / BBPE / WordPiece / SentencePiece | 「词表大小怎么权衡」「中文为什么吃亏」 | [[/docs/llm/tokenizer-bpe.md]] |
 | 3.8 | 架构选型：Encoder-only / Decoder-only / Enc-Dec | 「为什么现在都是 Decoder-only」 | [[/docs/llm/llm-architecture-decoder-only.md]] |
 | 3.9 | 预训练与 Scaling Law（Chinchilla、数据配比、涌现） | 「给定算力怎么分参数和数据」 | [[/docs/llm/pretraining-and-scaling-law.md]] |
-| 3.10 | 长上下文：外推、YaRN、稀疏/线性注意力、FlashAttention | 「FlashAttention 为什么快」「Lost in the Middle」 | [[/docs/llm/long-context-and-flashattention.md]] |
+| 3.10 | 长上下文：外推、YaRN、稀疏/线性注意力、FlashAttention | 「FlashAttention 为什么快」「Lost in the Middle」 | [[/docs/llm/long-context-and-flashattention.md]] · 🎯[[/docs/questions/attention-optimization-qa.md]] |
 | 3.11 | 解码策略：greedy / beam / top-k / top-p / temperature | 「temperature 与 top-p 谁先作用」 | [[/docs/llm/decoding-strategies.md]] |
 | 3.12 | MTP 多 token 预测 | 「MTP 与投机解码的关系」 | [[/docs/llm/mtp-multi-token-prediction.md]] |
 
@@ -65,9 +66,10 @@
 | 4.1 | SFT + PEFT：LoRA / QLoRA、灾难性遗忘 | 「LoRA 的 r 和 alpha」「为什么能 merge」 | [[/docs/llm/sft-lora-peft.md]] |
 | 4.2 | RLHF：RM、PPO、DPO、reward hacking、PRM/ORM | 「DPO 为什么不用 RM」「KL 惩罚作用」 | [[/docs/llm/rlhf-ppo-dpo.md]] |
 | 4.3 | GRPO | 「GRPO 去掉 critic 靠什么估 baseline」 | [[/docs/llm/grpo-group-relative-policy-optimization.md]] |
-| 4.4 | 推理模型与 Test-Time Scaling（o1/R1、RLVR、CoT） | 「长思维链怎么训出来」「self-consistency」 | [[/docs/llm/reasoning-and-test-time-scaling.md]] |
-| 4.5 | 量化：PTQ/QAT、GPTQ/AWQ/SmoothQuant、FP8、W4A16 | 「为什么权重能 4bit 激活不能」 | [[/docs/llm/quantization.md]] |
-| 4.6 | 幻觉与评测：成因、缓解、LLM-as-Judge、数据污染 | 「怎么评一个对话模型」 | [[/docs/llm/hallucination-and-evaluation.md]] |
+| 4.4 | On-Policy Distillation（OPD）：学生自采样 + 教师逐 token 监督 | 「OPD 与 SFT/RL 的区别」「为什么用 reverse KL」 | [[/docs/llm/on-policy-distillation-opd.md]] |
+| 4.5 | 推理模型与 Test-Time Scaling（o1/R1、RLVR、CoT） | 「长思维链怎么训出来」「self-consistency」 | [[/docs/llm/reasoning-and-test-time-scaling.md]] |
+| 4.6 | 量化：PTQ/QAT、GPTQ/AWQ/SmoothQuant、FP8、W4A16 | 「为什么权重能 4bit 激活不能」 | [[/docs/llm/quantization.md]] |
+| 4.7 | 幻觉与评测：成因、缓解、LLM-as-Judge、数据污染 | 「怎么评一个对话模型」 | [[/docs/llm/hallucination-and-evaluation.md]] |
 
 ## 5. RAG 与 Agent（应用层）
 
@@ -95,6 +97,7 @@
 | 7.1 | VLM 演进（CLIP → BLIP-2 → LLaVA → Qwen-VL） | [[/docs/llm/vlm-evolution.md]] |
 | 7.2 | DeepSeek 系列技术全景 | [[/docs/llm/deepseek-family.md]] |
 | 7.3 | DeepSeek V4 vs V3/R1 | [[/docs/llm/deepseek-v4-vs-v3-r1.md]] |
+| 7.4 | DeepSeek-V4.1-Flash：CED + CSA2 + FP4 KV（KV Cache 压缩极限） | [[/docs/llm/deepseek-v41-flash.md]] |
 
 ---
 
@@ -116,7 +119,7 @@
 14. **给定算力怎么分参数量和数据量？** → Chinchilla：参数与 token 同比放大，约 20 tokens/param → §3.9
 15. **FlashAttention 为什么快？** → 分块 + online softmax，避免物化 n×n 注意力矩阵，IO-aware → §3.10
 16. **DPO 相比 RLHF-PPO 省了什么？** → 省掉显式 RM 与在线采样，把偏好优化写成闭式分类损失 → §4.2
-17. **为什么权重能量化到 4bit，激活不行？** → 权重分布集中、离线可校准；激活有动态离群值，需 SmoothQuant 等迁移 → §4.5
+17. **为什么权重能量化到 4bit，激活不行？** → 权重分布集中、离线可校准；激活有动态离群值，需 SmoothQuant 等迁移 → §4.6
 18. **RAG 召回不准怎么排查？** → 分层定位：解析→chunk→embedding→索引→召回→rerank→上下文→生成 → §5.3
 19. **ReAct 循环怎么防死循环？** → 步数/预算上限 + 终止条件 + 重复动作检测 + 工具失败兜底 → §5.4
 20. **7B 模型全参微调大概要多少显存？** → 参数+梯度+Adam 双状态 ≈ 16 bytes/param ≈ 112 GB（再加激活）→ §6.1

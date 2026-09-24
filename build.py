@@ -38,15 +38,18 @@ OUT_DIR = ROOT / "site"
 SITE = {
     "title": "AI Interview 知识库",
     "brand": "AI Interview",
-    "tagline": "AI 方向知识点整理与面试准备 · 每天学习一点点，持续更新中",
+    "tagline": "AI 面试题与知识点整理 · 以题带点：先做题自测，再回知识点查漏补缺",
     "recent_days": 3,          # 「最近 N 天」窗口
     "recent_strip_count": 6,   # 首页「最近更新」横条展示条数
     "date_chip_count": 12,     # 更新页快捷日期 chips 数量
     "tag_cloud_count": 16,     # 首页侧边栏「热门标签」个数
 }
 
-# 板块：分类之上的一层，让首页侧边栏呈现「基础理论 → 大模型技术 → 工程与面试」的层级
+# 板块：分类之上的一层。「面试题库」置于首位——本站的组织逻辑是以题带点：
+# 题库负责自测查漏，其余板块的知识点文档负责系统补缺
 GROUPS = {
+    "questions":  {"name": "面试题库",   "icon": "🎯", "order": 5,
+                   "desc": "以面试题为中心：先自测答题，卡壳再回知识点"},
     "foundation": {"name": "基础理论",   "icon": "🌱", "order": 10,
                    "desc": "机器学习与深度学习的底层基本功"},
     "frontier":   {"name": "大模型技术", "icon": "🚀", "order": 20,
@@ -58,6 +61,7 @@ DEFAULT_GROUP = {"name": "其他", "icon": "📚", "order": 999, "desc": ""}
 
 # 分类（docs/ 下一级目录）展示名、图标与所属板块；未登记的目录按目录名显示
 CATEGORIES = {
+    "questions":   {"name": "面试题汇总", "icon": "🎯", "order": 5,  "group": "questions"},
     "ml":          {"name": "机器学习",   "icon": "📊", "order": 10, "group": "foundation"},
     "dl":          {"name": "深度学习",   "icon": "🧠", "order": 20, "group": "foundation"},
     "nlp":         {"name": "自然语言处理", "icon": "💬", "order": 45, "group": "foundation"},
@@ -313,6 +317,7 @@ def page_shell(*, page, title, out_rel, nav_html, content, repo_url, build_date,
 def nav_links(page, out_rel, repo_url):
     items = [
         ("home", "首页", "index.html"),
+        ("questions", "面试题库", "questions.html"),
         ("updates", "最近更新", "updates.html"),
     ]
     parts = []
@@ -345,6 +350,35 @@ def article_card(doc: Doc, from_out_rel: Path, fresh_dates, show_category=False)
 
 
 # ------------------------------------------------------------ 各页面生成
+
+def collect_question_index(docs, docs_by_rel):
+    """扫描 questions 分类的题集文档，提取 h2 主题分组与 h3 题目，生成题库索引。
+
+    返回 (index, total)：index 为 [{doc, groups: [{title, items: [{anchor, text, stars}]}]}]，
+    锚点与文章页目录出自同一条渲染管线，保证跳转一致。
+    """
+    q_docs = sorted([d for d in docs if d.category == "questions"],
+                    key=lambda d: natural_key(d.title))
+    index, total = [], 0
+    for d in q_docs:
+        toc = extract_toc(render_markdown(d, docs_by_rel))
+        groups, cur = [], None
+        for lv, anchor, text in toc:
+            if lv == 2:
+                cur = {"title": text, "items": []}
+                groups.append(cur)
+            elif lv == 3:
+                if cur is None:
+                    cur = {"title": "", "items": []}
+                    groups.append(cur)
+                m = re.search(r"(⭐+)\s*$", text)
+                stars = m.group(1) if m else ""
+                label = text[:m.start()].rstrip() if m else text
+                cur["items"].append({"anchor": anchor, "text": label, "stars": stars})
+                total += 1
+        index.append({"doc": d, "groups": groups})
+    return index, total
+
 
 def sidebar_tree(groups, out_rel, recent_keys, top_tags, total):
     """首页左侧的层级索引：板块 → 分类 → 文章。"""
@@ -408,7 +442,8 @@ def sidebar_tree(groups, out_rel, recent_keys, top_tags, total):
     return node_all + "\n  " + "\n  ".join(blocks) + ("\n  " + tags_html if tags_html else "")
 
 
-def build_home(docs, groups, fresh_dates, repo_url, build_date, latest_date, top_tags):
+def build_home(docs, groups, fresh_dates, repo_url, build_date, latest_date, top_tags,
+               question_total=0, map_href=""):
     out_rel = Path("index.html")
     cat_count = sum(len(g["cats"]) for g in groups)
     recent = sorted(docs, key=lambda d: (d.date, d.title), reverse=True)[:SITE["recent_strip_count"]]
@@ -473,13 +508,18 @@ def build_home(docs, groups, fresh_dates, repo_url, build_date, latest_date, top
 
   <div class="content-col" id="content-col">
     <section class="hero">
-      <h1>每天学习一点 <span class="em">AI</span> 知识</h1>
+      <h1>以题带点，吃透 <span class="em">AI</span> 面试</h1>
       <p class="tagline">{esc(SITE["tagline"])}</p>
       <div class="hero-stats">
-        <div class="stat"><div class="num">{len(docs)}</div><div class="label">已收录文章</div></div>
-        <div class="stat"><div class="num">{cat_count}</div><div class="label">知识分类</div></div>
+        <div class="stat"><div class="num">{question_total}</div><div class="label">收录面试题</div></div>
+        <div class="stat"><div class="num">{len(docs)}</div><div class="label">知识点文档</div></div>
         <div class="stat"><div class="num">{esc(latest_date[5:])}</div><div class="label">最近更新</div></div>
       </div>
+      <div class="hero-cta">
+        <a class="cta-primary" href="questions.html">🎯 进入面试题库{('（' + str(question_total) + ' 题）') if question_total else ''}</a>
+        {f'<a class="cta-secondary" href="{esc(map_href)}">🗺 知识点地图</a>' if map_href else ''}
+      </div>
+      <p class="hero-hint">推荐路径：题库自测 → 定位薄弱点 → 回知识点文档系统补缺 → 考前刷速记表</p>
     </section>
 
     <section class="recent-strip">
@@ -583,6 +623,62 @@ def build_updates(docs, fresh_dates, repo_url, build_date, today):
 """
     return page_shell(page="updates", title="最近更新", out_rel=out_rel,
                       nav_html=nav_links("updates", out_rel, repo_url),
+                      content=content, repo_url=repo_url, build_date=build_date)
+
+
+def build_questions(index, total, repo_url, build_date):
+    """面试题库索引页：以题为中心，按题集 → 主题分组列出全部题目，支持搜索直达锚点。"""
+    out_rel = Path("questions.html")
+    doc_sections = []
+    for entry in index:
+        d = entry["doc"]
+        doc_href = rel_href(out_rel, d.out_rel)
+        n_q = sum(len(g["items"]) for g in entry["groups"])
+        group_html = []
+        for g in entry["groups"]:
+            items = "\n".join(
+                f'      <li><a class="qa-item" href="{esc(doc_href)}#{esc(it["anchor"])}" '
+                f'data-search="{esc(it["text"].lower())}">'
+                f'<span class="qa-q">{esc(it["text"])}</span>'
+                + (f'<span class="qa-stars">{esc(it["stars"])}</span>' if it["stars"] else "")
+                + "</a></li>"
+                for it in g["items"])
+            title = f'<h3 class="qa-group-title">{esc(g["title"])}</h3>' if g["title"] else ""
+            group_html.append(f"""<div class="qa-group">
+    {title}
+    <ul class="qa-list">
+{items}
+    </ul>
+  </div>""")
+        excerpt = f'<p class="qa-doc-excerpt">{esc(d.excerpt)}</p>' if d.excerpt else ""
+        doc_sections.append(f"""<section class="qa-doc">
+  <div class="qa-doc-head">
+    <h2><a href="{esc(doc_href)}">{esc(d.title)}</a></h2>
+    <span class="qa-count">{n_q} 题</span>
+  </div>
+  {excerpt}
+  {chr(10).join(group_html)}
+</section>""")
+
+    content = f"""
+<div class="wrap qa-wrap">
+  <section class="updates-hero">
+    <h1>🎯 面试题库</h1>
+    <p>以题带点：先用题目自测，卡壳再回知识点文档查漏补缺 · 共 {total} 题 · {len(index)} 个专题</p>
+  </section>
+
+  <div class="qa-search">
+    <input type="search" placeholder="搜索题目关键词：RoPE、外推、KV Cache…" aria-label="搜索题目">
+  </div>
+  <div class="filter-empty" style="display:none">没有匹配的题目，换个关键词试试～</div>
+
+{chr(10).join(doc_sections)}
+
+  <div class="qa-tip">📌 推荐用法：每题先口述 30 秒再看速答；答不出「为什么」的点，点击题目进入详解，并通过文内双链回到知识点文档系统补缺。</div>
+</div>
+"""
+    return page_shell(page="questions", title="面试题库", out_rel=out_rel,
+                      nav_html=nav_links("questions", out_rel, repo_url),
                       content=content, repo_url=repo_url, build_date=build_date)
 
 
@@ -711,6 +807,11 @@ def main():
     top_tags = sorted(((t, n) for t, n in counter.items() if 1 < n <= too_common),
                       key=lambda kv: (-kv[1], kv[0]))[:SITE["tag_cloud_count"]]
 
+    # 题库索引：questions 分类文档的 h2 主题 + h3 题目
+    q_index, q_total = collect_question_index(docs, docs_by_rel)
+    map_doc = docs_by_rel.get("docs/interview/bagu-knowledge-map.md")
+    map_href = rel_href(Path("index.html"), map_doc.out_rel) if map_doc else ""
+
     # 重建输出目录
     if OUT_DIR.exists():
         shutil.rmtree(OUT_DIR)
@@ -732,8 +833,11 @@ def main():
 
     # 生成页面
     (OUT_DIR / "index.html").write_text(
-        build_home(docs, groups, fresh_dates, repo_url, build_date, latest_date, top_tags),
+        build_home(docs, groups, fresh_dates, repo_url, build_date, latest_date, top_tags,
+                   question_total=q_total, map_href=map_href),
         encoding="utf-8")
+    (OUT_DIR / "questions.html").write_text(
+        build_questions(q_index, q_total, repo_url, build_date), encoding="utf-8")
     (OUT_DIR / "updates.html").write_text(
         build_updates(docs, fresh_dates, repo_url, build_date, today), encoding="utf-8")
     for d in docs:
@@ -743,7 +847,7 @@ def main():
             build_article(d, docs_by_rel, cat_docs, fresh_dates, repo_url, build_date),
             encoding="utf-8")
 
-    print(f"✅ 构建完成：{len(docs)} 篇文章，{len(cats)} 个分类")
+    print(f"✅ 构建完成：{len(docs)} 篇文章，{len(cats)} 个分类，题库 {q_total} 题")
     print(f"   输出目录：{OUT_DIR}")
     print(f"   本地预览：open {(OUT_DIR / 'index.html')}")
     if repo_url:

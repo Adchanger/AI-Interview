@@ -6,7 +6,7 @@
 
 > **一句话**：SFT 用「指令-回答」对做因果语言建模（只对回答算 loss），LoRA 用低秩矩阵 $BA$ 近似权重更新、只训 0.1%~1% 参数且可合并回主干零推理开销，QLoRA 再把主干量化到 NF4 让单卡微调 65B 成为可能。
 
-> **关联阅读**：[[/docs/llm/rlhf-ppo-dpo.md]]、[[/docs/llm/quantization.md]]、[[/docs/engineering/distributed-training.md]]
+> **关联阅读**：[[/docs/llm/rlhf-ppo-dpo.md]]、[[/docs/llm/on-policy-distillation-opd.md]]、[[/docs/llm/quantization.md]]、[[/docs/engineering/distributed-training.md]]
 
 ---
 

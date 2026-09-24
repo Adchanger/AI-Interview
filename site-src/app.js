@@ -242,6 +242,39 @@
     spy();
   }
 
+  /* ---------- 面试题库页：题目搜索过滤 ---------- */
+  if (page === 'questions') {
+    var qInput  = document.querySelector('.qa-search input');
+    var qItems  = Array.prototype.slice.call(document.querySelectorAll('.qa-item'));
+    var qGroups = Array.prototype.slice.call(document.querySelectorAll('.qa-group'));
+    var qDocs   = Array.prototype.slice.call(document.querySelectorAll('.qa-doc'));
+    var qEmpty  = document.querySelector('.filter-empty');
+
+    function qRender() {
+      var q = (qInput && qInput.value || '').trim().toLowerCase();
+      var shown = 0;
+      qItems.forEach(function (a) {
+        var ok = !q || (a.getAttribute('data-search') || '').toLowerCase().indexOf(q) !== -1;
+        a.parentNode.style.display = ok ? '' : 'none';
+        if (ok) shown++;
+      });
+      qGroups.forEach(function (g) {
+        var vis = Array.prototype.some.call(g.querySelectorAll('.qa-list li'), function (li) {
+          return li.style.display !== 'none';
+        });
+        g.style.display = vis ? '' : 'none';
+      });
+      qDocs.forEach(function (d) {
+        var vis = Array.prototype.some.call(d.querySelectorAll('.qa-group'), function (g) {
+          return g.style.display !== 'none';
+        });
+        d.style.display = vis ? '' : 'none';
+      });
+      if (qEmpty) qEmpty.style.display = shown ? 'none' : '';
+    }
+    if (qInput) qInput.addEventListener('input', qRender);
+  }
+
   /* ---------- 最近更新页：按日期筛选 ---------- */
   if (page === 'updates') {
     var picker = document.getElementById('date-picker');

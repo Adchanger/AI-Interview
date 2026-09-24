@@ -1,11 +1,12 @@
 # AI-Interview
 
-AI 方向知识点整理与面试准备仓库。
+AI 方向面试题与知识点整理仓库——**以面试题为中心，以题带点**：题库负责自测查漏，知识点文档负责系统补缺。
 
 ## 内容规划
 
-涵盖 AI 方向的常见知识点，包括但不限于：
+涵盖 AI 方向的常见面试题与知识点，包括但不限于：
 
+- **面试题汇总**（以题为中心：30 秒速答 + 解析 + 面试官追问 + 关联知识点）
 - 机器学习基础（经典算法、模型评估、特征工程）
 - 深度学习（CNN / RNN / Transformer、优化器、正则化）
 - 大语言模型（LLM 原理、Prompt Engineering、RAG、Agent、微调）
@@ -17,14 +18,21 @@ AI 方向知识点整理与面试准备仓库。
 
 ## 从哪里开始
 
-**[算法八股知识点总清单（面试地图）](docs/interview/bagu-knowledge-map.md)** —— 六大板块知识点清单 + 每个知识点对应的详解文档链接，建议从这里进入。
+推荐路径：**题库自测 → 定位薄弱点 → 回知识点文档系统补缺 → 考前刷速记表**。
+
+- **[面试题库](docs/questions/)** —— 以面试题为中心的题集，先做题定位薄弱点：
+  - [位置编码面试题汇总（RoPE 重点）](docs/questions/positional-encoding-qa.md)
+  - [注意力优化面试题汇总（FlashAttention / MQA / GQA / MLA / KV Cache）](docs/questions/attention-optimization-qa.md)
+- **[算法八股知识点总清单（面试地图）](docs/interview/bagu-knowledge-map.md)** —— 六大板块知识点清单 + 每个知识点对应的详解文档链接，查漏后从这里系统补缺。
 
 ## 结构
 
 ```
 AI-Interview/
 ├── README.md            # 本文件
-├── docs/                # 知识点文档（markdown，按主题目录组织）
+├── docs/
+│   ├── questions/       # 面试题汇总（以题带点的题集，本站核心）
+│   └── ...              # 知识点文档（markdown，按主题目录组织）
 ├── site-src/            # 站点样式与脚本源文件
 ├── build.py             # 静态站点生成器
 └── .github/workflows/   # GitHub Actions 自动部署 Pages

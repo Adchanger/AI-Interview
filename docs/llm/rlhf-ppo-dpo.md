@@ -6,7 +6,7 @@
 
 > **一句话**：RLHF 三阶段是 SFT → 训练奖励模型（pairwise 排序损失）→ 用 PPO 以奖励为信号优化策略并加 KL 约束防跑偏；DPO 通过闭式推导把"隐式奖励"直接写进偏好分类损失，省掉显式 RM 与在线采样，工程更稳更省，但上限与可持续优化能力弱于在线 RL。
 
-> **关联阅读**：[[/docs/llm/sft-lora-peft.md]]、[[/docs/llm/grpo-group-relative-policy-optimization.md]]、[[/docs/llm/reasoning-and-test-time-scaling.md]]
+> **关联阅读**：[[/docs/llm/sft-lora-peft.md]]、[[/docs/llm/grpo-group-relative-policy-optimization.md]]、[[/docs/llm/on-policy-distillation-opd.md]]、[[/docs/llm/reasoning-and-test-time-scaling.md]]
 
 ---
 

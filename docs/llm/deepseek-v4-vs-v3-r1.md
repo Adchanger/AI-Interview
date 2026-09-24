@@ -260,4 +260,4 @@ R1 的后训练是"单模型多阶段 RL"；V3.2 是 mixed RL（所有域混一�
 - [DeepSeek-V3 Technical Report（arXiv:2412.19437，2024.12）](https://arxiv.org/abs/2412.19437)
 - [DeepSeek-R1: Incentivizing Reasoning Capability in LLMs via Reinforcement Learning（arXiv:2501.12948，2025.01）](https://arxiv.org/abs/2501.12948)
 - [Muon 优化器原论文（Jordan et al., 2024）](https://github.com/KellerJordan/Muon)
-- 延伸阅读：[[/docs/llm/deepseek-family.md]]（家族七代演进总览）、[[/docs/llm/mla-multi-head-latent-attention.md]]、[[/docs/llm/mtp-multi-token-prediction.md]]、[[/docs/llm/grpo-group-relative-policy-optimization.md]]、[[/docs/llm/transformer-principle.md]]（注意力机制基础）
+- 延伸阅读：[[/docs/llm/deepseek-family.md]]（家族七代演进总览）、[[/docs/llm/deepseek-v41-flash.md]]（V4.1-Flash：CED + CSA2 把 KV Cache 压到 890 字节）、[[/docs/llm/on-policy-distillation-opd.md]]（OPD：V4 的专家合并 + 能力保活）、[[/docs/llm/mla-multi-head-latent-attention.md]]、[[/docs/llm/mtp-multi-token-prediction.md]]、[[/docs/llm/grpo-group-relative-policy-optimization.md]]、[[/docs/llm/transformer-principle.md]]（注意力机制基础）

@@ -68,6 +68,7 @@
 | 2025-01 | **DeepSeek-R1 / R1-Zero** | 纯 RL 训出推理，**"aha moment"** | arXiv:2501.12948 |
 | 2025-08 | DeepSeek-V3.2-Exp | 引入 **DSA**（DeepSeek Sparse Attention） | arXiv:2508.00112 |
 | 2026-04 | **DeepSeek-V4 系列** | **CSA + HCA** 1M 上下文；**mHC + Muon** | arXiv:2606.19348 |
+| 2026-09 | **DeepSeek-V4.1-Flash** | **CED + CSA2 + FP4 KV**；全局 KV 压到 **890 字节/token** | arXiv:2609.19969 |
 
 > 面试高频：面试官问"DeepSeek 一共几代模型""V3 和 R1 什么关系""V4 比 V3 强在哪"——看这张表基本都能答。
 
@@ -122,6 +123,7 @@
 | DeepSeek-R1: Incentivizing Reasoning Capability via RL | arXiv:2501.12948 | **纯 RL 训推理 + 四阶段管线** | R1 篇 |
 | DeepSeek-V3.2: Sparse Attention | arXiv:2508.00112 | **DSA 稀疏注意力**（V4 CSA 的雏形） | V4 架构篇 |
 | DeepSeek-V4: Towards Highly Efficient Million-Token LLMs | arXiv:2606.19348 | CSA + HCA + mHC + Muon + OPD | V4 架构 + 训练篇 |
+| DeepSeek-V4.1-Flash: Pushing the Limits of KV Cache Compression | arXiv:2609.19969 | **CED + CSA2 + FP4 主 KV + SWA Bounded Replay** | [[/docs/llm/deepseek-v41-flash.md]] |
 | Moonlight: Muon Optimizer for LLM | arXiv:2502.16982 | **Muon 优化器** 规模化方案 | V4 训练篇（外部参考） |
 
 > 面试高频：面试官问"GRPO 是哪篇论文提的""MLA 是 V2 还是 V3"——准确归属是 P0 级别要求。
@@ -2303,6 +2305,8 @@ V4 Agent 任务支持 **Quick Instruction**：
 ---
 
 ### 8. OPD（On-Policy Distillation）—— 融合多专家
+
+> OPD 的完整原理（reverse KL 梯度推导、成功条件、使用 recipe、工业实践）见 [[/docs/llm/on-policy-distillation-opd.md]]；本节只讲 V4 的用法。
 
 #### 8.1 核心问题
 

@@ -511,3 +511,4 @@ GRPO loss（clip + KL）：
 - Rafailov et al., Direct Preference Optimization: Your Language Model is Secretly a Reward Model, NeurIPS 2023（DPO）
 - 相关文章：
   - [[/docs/llm/deepseek-family.md]]（Part 3 · R1 / Part 5 · V4 Specialist / Part 1 · V3 后训练）
+  - [[/docs/llm/on-policy-distillation-opd.md]]（OPD：同样复用 RL 框架，把奖励换成教师逐 token 监督）

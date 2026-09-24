@@ -6,7 +6,7 @@
 
 > **一句话**：从"把算力堆在预训练"转向"把算力也堆在后训练 RL 与推理时思考"——CoT 让模型把中间步骤写出来，**RLVR**（可验证奖励强化学习）在数学/代码上自发训练出长思维链与自我反思，推理时再用多采样、验证器重排、反思循环把准确率继续往上推。
 
-> **关联阅读**：[[/docs/llm/rlhf-ppo-dpo.md]]、[[/docs/llm/grpo-group-relative-policy-optimization.md]]、[[/docs/llm/decoding-strategies.md]]
+> **关联阅读**：[[/docs/llm/rlhf-ppo-dpo.md]]、[[/docs/llm/grpo-group-relative-policy-optimization.md]]、[[/docs/llm/on-policy-distillation-opd.md]]、[[/docs/llm/decoding-strategies.md]]
 
 ---
 
